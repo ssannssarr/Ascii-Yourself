@@ -14,14 +14,35 @@ export const AsciiCanvas: React.FC<AsciiCanvasProps> = ({ options, onCapture }) 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hiddenCanvasRef = useRef<HTMLCanvasElement>(null); // For processing pixels
   const prevFrameRef = useRef<Float32Array | null>(null); // Store previous frame for smoothing
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isCameraReady, setIsCameraReady] = useState(false);
+
+  const resizeCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const parent = canvas.parentElement;
+    const width = parent?.clientWidth || window.innerWidth;
+    const height = parent?.clientHeight || window.innerHeight;
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      prevFrameRef.current = null;
+    }
+  };
 
   useEffect(() => {
     let stream: MediaStream | null = null;
 
     const startCamera = async () => {
       try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setError("Camera access requires localhost or HTTPS in a supported browser.");
+          return;
+        }
+
         stream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             width: { ideal: 640 }, 
@@ -31,9 +52,22 @@ export const AsciiCanvas: React.FC<AsciiCanvasProps> = ({ options, onCapture }) 
         });
         
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          const video = videoRef.current;
+          video.srcObject = stream;
+
+          await new Promise<void>((resolve) => {
+            if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+              resolve();
+              return;
+            }
+
+            video.onloadedmetadata = () => resolve();
+          });
+
           // Ensure video actually plays
-          await videoRef.current.play().catch(e => console.error("Play error:", e));
+          await video.play();
+          setIsCameraReady(true);
+          resizeCanvas();
           
           // Play sci-fi startup sound when camera is ready
           playStartupSound();
@@ -42,7 +76,7 @@ export const AsciiCanvas: React.FC<AsciiCanvasProps> = ({ options, onCapture }) 
         }
       } catch (err) {
         console.error("Error accessing camera:", err);
-        setError("Unable to access camera. Please allow permissions.");
+        setError("Unable to access camera. Allow permission and use http://localhost or HTTPS.");
       }
     };
 
@@ -53,23 +87,14 @@ export const AsciiCanvas: React.FC<AsciiCanvasProps> = ({ options, onCapture }) 
         stream.getTracks().forEach(track => track.stop());
       }
       stopAmbientHum();
+      setIsCameraReady(false);
     };
   }, []);
 
   // Handle Canvas Resizing
   useEffect(() => {
     const handleResize = () => {
-        if (canvasRef.current) {
-            // Check parent size to avoid scrollbar issues, fallback to window
-            const parent = canvasRef.current.parentElement;
-            if (parent) {
-                canvasRef.current.width = parent.clientWidth;
-                canvasRef.current.height = parent.clientHeight;
-            } else {
-                canvasRef.current.width = window.innerWidth;
-                canvasRef.current.height = window.innerHeight;
-            }
-        }
+        resizeCanvas();
     };
     window.addEventListener('resize', handleResize);
     handleResize();
@@ -88,7 +113,7 @@ export const AsciiCanvas: React.FC<AsciiCanvasProps> = ({ options, onCapture }) 
       const hiddenCanvas = hiddenCanvasRef.current;
       
       // Check if video has enough data. readyState >= 2 is HAVE_CURRENT_DATA
-      if (!video || !canvas || !hiddenCanvas || video.readyState < 2) {
+      if (!video || !canvas || !hiddenCanvas || !isCameraReady || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
         animationRef.current = requestAnimationFrame(renderLoop);
         return;
       }
@@ -228,7 +253,7 @@ export const AsciiCanvas: React.FC<AsciiCanvasProps> = ({ options, onCapture }) 
             cancelAnimationFrame(animationRef.current);
         }
     };
-  }, [options]);
+  }, [options, isCameraReady]);
 
   const handleCaptureClick = () => {
     if (canvasRef.current) {
@@ -259,11 +284,15 @@ export const AsciiCanvas: React.FC<AsciiCanvasProps> = ({ options, onCapture }) 
                 <p>{error}</p>
             </div>
         )}
-        {/* Important: Video must not be display:none for textures to update in some browsers. 
-            Using opacity-0 and z-index -1 keeps it in the DOM but invisible. */}
+        {!error && !isCameraReady && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black text-green-500 z-30 font-mono">
+                <p>INITIALIZING CAMERA...</p>
+            </div>
+        )}
+        {/* Keep the video renderable for browser frame updates while moving it out of view. */}
         <video 
             ref={videoRef} 
-            className="absolute top-0 left-0 opacity-0 pointer-events-none -z-10 w-1 h-1" 
+            className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none w-px h-px" 
             playsInline 
             autoPlay 
             muted 
