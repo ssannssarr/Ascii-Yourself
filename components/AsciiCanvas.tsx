@@ -301,24 +301,27 @@ export const AsciiCanvas: React.FC<AsciiCanvasProps> = ({ options, onCapture }) 
         <canvas ref={canvasRef} className="block w-full h-full" />
         
         {/* Floating Controls Container */}
-        <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 flex items-center gap-8 z-40">
+        <div className="absolute left-1/2 z-40 flex -translate-x-1/2 items-end gap-4 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:bottom-28 md:bottom-32">
             {/* Screenshot Button */}
             <button 
                 onClick={handleScreenshotClick}
-                className="bg-black/60 hover:bg-green-900/80 text-green-400 border border-green-500/50 p-4 rounded-full backdrop-blur-md transition-all active:scale-95 hover:scale-105 hover:shadow-[0_0_15px_rgba(0,255,0,0.3)]"
-                title="Save Snapshot"
+                className="flex min-w-[88px] flex-col items-center gap-1 rounded-2xl border border-green-500/50 bg-black/60 px-3 py-2 text-green-400 backdrop-blur-md transition-all active:scale-95 hover:scale-105 hover:bg-green-900/80 hover:shadow-[0_0_15px_rgba(0,255,0,0.3)] sm:min-w-0 sm:rounded-full sm:p-4"
+                title="Download Photo"
+                aria-label="Download photo"
             >
-                <Camera className="w-6 h-6" />
+                <Camera className="h-5 w-5 sm:h-6 sm:w-6" />
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] sm:hidden">Download</span>
             </button>
 
             {/* Scan & Analyze Button (Primary) */}
             <button 
                 onClick={handleCaptureClick}
-                className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/50 p-6 rounded-full backdrop-blur-md transition-all active:scale-95 group relative hover:shadow-[0_0_25px_rgba(0,255,0,0.5)]"
+                className="group relative rounded-full border border-green-500/50 bg-green-500/20 p-4 text-green-400 backdrop-blur-md transition-all active:scale-95 hover:bg-green-500/40 hover:shadow-[0_0_25px_rgba(0,255,0,0.5)] sm:p-6"
                 title="Scan & Analyze"
+                aria-label="Scan and analyze"
             >
                 <div className="absolute inset-0 rounded-full border border-green-500 opacity-50 animate-ping"></div>
-                <ScanEye className="w-8 h-8" />
+                <ScanEye className="h-7 w-7 sm:h-8 sm:w-8" />
             </button>
         </div>
     </div>

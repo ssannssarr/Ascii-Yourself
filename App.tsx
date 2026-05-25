@@ -4,7 +4,7 @@ import { ControlPanel } from './components/ControlPanel';
 import { AnalysisModal } from './components/AnalysisModal';
 import { AsciiOptions, AnalysisResult } from './types';
 import { analyzeImage } from './services/geminiService';
-import { Camera, Terminal, Zap, ScanEye } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 import { playAnalysisStartSound, playAnalysisCompleteSound } from './utils/soundEffects';
 
 const App: React.FC = () => {
@@ -44,14 +44,16 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-screen bg-black overflow-hidden flex flex-col">
+    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-black">
       {/* Header / HUD */}
-      <header className="absolute top-0 left-0 w-full p-4 z-20 flex justify-between items-center pointer-events-none bg-gradient-to-b from-black/80 to-transparent">
-        <div className="flex items-center gap-2 text-green-500 pointer-events-auto">
+      <header className="pointer-events-none absolute left-0 top-0 z-20 flex w-full flex-col gap-2 bg-gradient-to-b from-black/80 to-transparent p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <div className="pointer-events-auto flex items-center gap-2 text-green-500">
           <Terminal className="w-6 h-6 animate-pulse" />
-          <h1 className="text-xl font-bold tracking-widest uppercase">CyberAscii<span className="text-xs ml-1 opacity-70">v1.0</span></h1>
+          <h1 className="text-lg font-bold uppercase tracking-[0.25em] sm:text-xl">
+            CyberAscii<span className="ml-1 text-[10px] opacity-70 sm:text-xs">v1.0</span>
+          </h1>
         </div>
-        <div className="text-green-800 text-xs flex gap-4 font-mono">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-green-800 sm:text-xs font-mono">
           <span>SYS.STATUS: ONLINE</span>
           <span>CAM.FEED: ACTIVE</span>
           <span className="animate-pulse">REC ●</span>
